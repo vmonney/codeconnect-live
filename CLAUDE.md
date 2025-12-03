@@ -3,25 +3,67 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 
-## Backend
-For backend development, use `uv` for dependency management.
+## Backend (FastAPI)
 
-Useful Commands
+**Location**: `/backend` directory
+**Tech Stack**: FastAPI + SQLite + SQLAlchemy + JWT + WebSockets
+**Server**: http://localhost:8000
+**API Docs**: http://localhost:8000/api/docs
 
-    # Sync dependencies from lockfile
-    uv sync
+### Backend Commands
 
-    # Add a new package
-    uv add <PACKAGE-NAME>
+```bash
+cd backend
 
-    # Run Python files
-    uv run python <PYTHON-FILE>
+# Sync dependencies from lockfile
+uv sync
+
+# Add a new package
+uv add <PACKAGE-NAME>
+
+# Run development server (with auto-reload)
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Run seed data script (populate demo users & templates)
+uv run python scripts/seed_data.py
+```
+
+### Demo Users
+- **Interviewer**: interviewer@demo.com / demo123
+- **Candidate**: candidate@demo.com / demo123
+
+### Backend Architecture
+
+**Database Models** (`backend/app/models/`):
+- `User` - Authentication with bcrypt hashing
+- `Interview` - Interview sessions with code tracking
+- `CodeTemplate` - Problem templates with multi-language starter code
+- `ChatMessage` - Persistent chat history
+- `Invitation` - Interview invitations
+
+**API Routers** (`backend/app/routers/`):
+- `auth.py` - Signup, login, JWT authentication
+- `interviews.py` - Interview CRUD + stats + messages + participants
+- `templates.py` - Template CRUD with filtering
+- `invitations.py` - Invitation management
+- `users.py` - User profile updates
+- `code_execution.py` - Mock code execution (6 languages)
+- `websocket.py` - Real-time WebSocket endpoint
+
+**WebSocket Events**:
+- `code_update` - Sync code changes
+- `cursor_update` - Real-time cursor positions
+- `chat_message` - Persistent chat
+- `typing` - Typing indicators
+- `language_change` - Switch languages
+- `interview_status` - Status updates
+- `participant_joined/left` - Participant tracking
 
 ## Project Overview
 
-CodeView is a professional coding interview platform built with React, TypeScript, Vite, and shadcn-ui. It enables real-time collaborative technical interviews with live code editing, execution, and communication between interviewers and candidates.
+CodeView is a professional coding interview platform with a React frontend and FastAPI backend. It enables real-time collaborative technical interviews with live code editing, execution, and communication between interviewers and candidates.
 
-**Current State**: Frontend prototype with mock backend services. All API endpoints are stubbed in `src/api/codeService.ts` for future real backend integration.
+**Current State**: Full-stack application with FastAPI backend and React frontend. Backend provides REST APIs, WebSocket support, and mock code execution.
 
 ## Development Commands
 
@@ -159,17 +201,44 @@ Key interfaces:
 - `ProgrammingLanguage`: Union type of 6 supported languages
 - `CodeExecution`: Result object from code execution (output, error, executionTime)
 
-## Future Backend Integration
+## Frontend-Backend Integration
 
-When connecting to real backend:
+The backend is now implemented! To connect the frontend:
 
-1. **Replace `apiService` functions** in `src/api/codeService.ts` with HTTP calls
-2. **Add WebSocket client** for real-time code sync (replace `subscribeToInterview` mock)
-3. **Implement real code execution** service (replace `mockCodeExecution`)
-4. **Add authentication tokens** to API calls (modify `authStore` to store JWT)
-5. **Sync Zustand stores** with backend state via React Query or WebSocket events
+1. **Update `frontend/src/api/codeService.ts`** - Replace mock functions with HTTP calls:
+   ```typescript
+   const API_BASE = 'http://localhost:8000/api';
 
-The current mock structure mirrors expected API contracts, making backend integration straightforward.
+   export const apiService = {
+     login: async (email, password) => {
+       const res = await fetch(`${API_BASE}/auth/login`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ email, password })
+       });
+       return res.json();
+     },
+     // ... implement other endpoints
+   };
+   ```
+
+2. **Update Zustand Stores** - Call real APIs instead of mocking local state:
+   - `authStore.ts` - Call `/api/auth/*` endpoints, store JWT in localStorage
+   - `interviewStore.ts` - Call `/api/interviews/*` endpoints
+   - `templateStore.ts` - Call `/api/templates/*` endpoints
+
+3. **WebSocket Integration**:
+   ```typescript
+   const token = localStorage.getItem('auth_token');
+   const ws = new WebSocket(`ws://localhost:8000/api/interviews/${id}/ws?token=${token}`);
+
+   ws.onmessage = (event) => {
+     const data = JSON.parse(event.data);
+     // Handle: code_update, cursor_update, chat_message, etc.
+   };
+
+   ws.send(JSON.stringify({ type: 'code_update', code: newCode }));
+   ```
 
 ## Key Development Notes
 
