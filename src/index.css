@@ -243,3 +243,35 @@
 .monaco-editor .margin {
   background: hsl(var(--editor-bg)) !important;
 }
+
+/* Remote cursor styles for collaborative editing */
+.remote-cursor {
+  background-color: #a855f7;
+  width: 2px !important;
+  animation: cursor-blink 1s infinite;
+}
+
+.remote-cursor::after {
+  content: attr(data-name);
+  position: absolute;
+  top: -20px;
+  left: 0;
+  background: #a855f7;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.remote-cursor-line {
+  border-left: 2px solid #a855f7;
+  margin-left: -2px;
+}
+
+/* Participant indicator colors */
+.cursor-purple { background-color: #a855f7 !important; border-color: #a855f7 !important; }
+.cursor-green { background-color: #22c55e !important; border-color: #22c55e !important; }
+.cursor-orange { background-color: #f59e0b !important; border-color: #f59e0b !important; }
+.cursor-pink { background-color: #ec4899 !important; border-color: #ec4899 !important; }

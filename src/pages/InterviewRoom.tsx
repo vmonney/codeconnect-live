@@ -61,6 +61,7 @@ export default function InterviewRoom() {
   const [output, setOutput] = useState<CodeExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+  const [simulatedParticipants, setSimulatedParticipants] = useState<Participant[]>([]);
 
   const template = interview?.templateId ? getTemplateById(interview.templateId) : undefined;
   const isInterviewer = user?.role === 'interviewer' && interview?.interviewerId === user?.id;
@@ -114,6 +115,42 @@ export default function InterviewRoom() {
       setLanguage(interview.language);
     }
   }, [interview]);
+
+  // Simulate other participants for demo purposes
+  useEffect(() => {
+    if (!id || !user) return;
+
+    // Add a simulated participant after a short delay
+    const addParticipantTimeout = setTimeout(() => {
+      const fakeParticipant: Participant = {
+        id: 'simulated-user-1',
+        name: user.role === 'interviewer' ? 'Alex (Candidate)' : 'Sarah (Interviewer)',
+        role: user.role === 'interviewer' ? 'candidate' : 'interviewer',
+        isOnline: true,
+        cursorColor: '#a855f7',
+        cursorPosition: { line: 5, column: 10 },
+      };
+      setSimulatedParticipants([fakeParticipant]);
+    }, 2000);
+
+    // Simulate cursor movement
+    const cursorInterval = setInterval(() => {
+      setSimulatedParticipants(prev => 
+        prev.map(p => ({
+          ...p,
+          cursorPosition: {
+            line: Math.max(1, Math.min(20, (p.cursorPosition?.line || 5) + Math.floor(Math.random() * 3) - 1)),
+            column: Math.max(1, Math.min(40, (p.cursorPosition?.column || 10) + Math.floor(Math.random() * 5) - 2)),
+          }
+        }))
+      );
+    }, 3000);
+
+    return () => {
+      clearTimeout(addParticipantTimeout);
+      clearInterval(cursorInterval);
+    };
+  }, [id, user]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -278,7 +315,7 @@ export default function InterviewRoom() {
               </div>
               <div className="h-[250px] flex-shrink-0">
                 <VideoPanel 
-                  participants={participants.filter(p => p.id !== user?.id)} 
+                  participants={[...participants.filter(p => p.id !== user?.id), ...simulatedParticipants]} 
                   localParticipant={localParticipant}
                 />
               </div>
@@ -295,7 +332,7 @@ export default function InterviewRoom() {
                   code={code}
                   language={language}
                   onChange={handleCodeChange}
-                  participants={participants.filter(p => p.id !== user?.id)}
+                  participants={[...participants.filter(p => p.id !== user?.id), ...simulatedParticipants]}
                   theme={theme}
                 />
               </div>
