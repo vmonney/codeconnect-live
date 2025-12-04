@@ -249,6 +249,295 @@ The frontend uses the following defaults:
 - API Base URL: `http://localhost:8000/api`
 - WebSocket URL: `ws://localhost:8000/api`
 
+## Docker Deployment
+
+The application can be containerized and run in a single Docker container that serves both the backend and frontend.
+
+### Base Images
+
+- **Frontend Build**: `node:22-alpine` (for building React/Vite app)
+- **Backend Runtime**: `python:3.12-slim` (for running FastAPI + serving frontend)
+
+### Quick Start with Docker
+
+#### Option 1: Docker Compose (Recommended)
+
+```bash
+# Build and start the container
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the container
+docker-compose down
+```
+
+#### Option 2: Docker CLI
+
+```bash
+# Build the image
+docker build -t codeview:latest .
+
+# Create data directory for database persistence
+mkdir -p ./data
+
+# Run the container
+docker run -d \
+  --name codeview \
+  -p 8000:8000 \
+  -v $(pwd)/data:/app/data \
+  -e SECRET_KEY="$(openssl rand -hex 32)" \
+  codeview:latest
+
+# View logs
+docker logs -f codeview
+
+# Stop the container
+docker stop codeview
+docker rm codeview
+```
+
+### Testing the Containerized Application
+
+#### 1. Build and Start the Container
+
+```bash
+docker-compose up -d
+```
+
+#### 2. Check Container Health
+
+```bash
+# Check if container is running
+docker ps
+
+# View container logs
+docker logs -f codeview
+
+# Should see: "Application startup complete"
+```
+
+#### 3. Test Frontend Access
+
+```bash
+# Test that frontend is being served
+curl -I http://localhost:8000/
+
+# Should return: HTTP/1.1 200 OK
+# Content-Type: text/html
+```
+
+Open browser and navigate to:
+- **Frontend**: http://localhost:8000/
+- **Login Page**: http://localhost:8000/auth
+- **Dashboard**: http://localhost:8000/dashboard (after login)
+
+#### 4. Test Backend API
+
+```bash
+# Test API documentation endpoint
+curl http://localhost:8000/api/docs
+
+# Test health check
+curl http://localhost:8000/health
+
+# Should return: {"status":"healthy"}
+```
+
+#### 5. Test Authentication Flow
+
+1. Navigate to http://localhost:8000/auth
+2. Click "Sign Up" and create a new account
+3. Login with your credentials
+4. Verify you can access the dashboard
+
+#### 6. Test Database Persistence
+
+```bash
+# Create a user account via the UI
+# Stop the container
+docker-compose down
+
+# Restart the container
+docker-compose up -d
+
+# Login with the same account - should work!
+# This confirms database is persisted in ./data/codeview.db
+```
+
+#### 7. Test Code Execution
+
+1. Login to the application
+2. Create or join an interview
+3. Select **JavaScript** and run:
+   ```javascript
+   console.log("Hello from Docker!");
+   ```
+4. Select **Python** and run:
+   ```python
+   print("Hello from Docker!")
+   ```
+5. Both should execute successfully (WASM browser-based execution)
+
+#### 8. Inspect Container
+
+```bash
+# Shell into the running container
+docker exec -it codeview sh
+
+# Check if static files exist
+ls -la /app/static/
+
+# Should see: index.html, assets/, js-worker.js, etc.
+
+# Check if database directory exists
+ls -la /app/data/
+
+# Exit container shell
+exit
+```
+
+#### 9. Test with Demo Data
+
+```bash
+# Seed the database inside the container
+docker exec -it codeview uv run python scripts/seed_data.py
+
+# Now you can login with demo accounts:
+# Interviewer: interviewer@demo.com / demo123
+# Candidate: candidate@demo.com / demo123
+```
+
+### Docker Configuration
+
+#### Environment Variables
+
+You can customize the container using environment variables:
+
+```yaml
+# docker-compose.yml or docker run -e
+environment:
+  - DATABASE_URL=sqlite:///./data/codeview.db
+  - SECRET_KEY=your-secret-key-here  # Generate with: openssl rand -hex 32
+  - ALGORITHM=HS256
+  - ACCESS_TOKEN_EXPIRE_MINUTES=10080  # 7 days
+  - DEBUG=false
+  - CORS_ORIGINS=["http://localhost:8000"]
+```
+
+#### Volume Mounts
+
+The SQLite database is persisted using a volume mount:
+
+```bash
+# Host: ./data/codeview.db
+# Container: /app/data/codeview.db
+```
+
+**Important**: Always use volume mounts to prevent data loss when containers are removed.
+
+#### Port Mapping
+
+The container exposes port 8000:
+
+- Host: `http://localhost:8000`
+- Container: Port 8000
+
+#### Health Checks
+
+The container includes a health check that runs every 30 seconds:
+
+```bash
+# Check container health status
+docker inspect --format='{{.State.Health.Status}}' codeview
+
+# Should return: healthy
+```
+
+### Production Deployment
+
+#### Generate Secure Secret Key
+
+```bash
+openssl rand -hex 32
+```
+
+#### Run in Production Mode
+
+```bash
+docker run -d \
+  --name codeview \
+  -p 8000:8000 \
+  -v /var/lib/codeview:/app/data \
+  -e SECRET_KEY="your-generated-secret-key" \
+  -e DEBUG="false" \
+  -e CORS_ORIGINS='["https://yourdomain.com"]' \
+  --restart unless-stopped \
+  codeview:latest
+```
+
+#### Deploy to Cloud Platforms
+
+**Google Cloud Run:**
+```bash
+gcloud run deploy codeview --source . --platform managed
+```
+
+**AWS ECS/Fargate:**
+```bash
+# Push to ECR
+aws ecr get-login-password | docker login --username AWS --password-stdin <ecr-url>
+docker tag codeview:latest <ecr-url>/codeview:latest
+docker push <ecr-url>/codeview:latest
+```
+
+**Fly.io:**
+```bash
+fly launch
+fly deploy
+```
+
+### Troubleshooting
+
+#### Container won't start
+
+```bash
+# Check container logs
+docker logs codeview
+
+# Check if port 8000 is already in use
+lsof -i :8000
+
+# Use a different port
+docker run -p 8080:8000 codeview:latest
+```
+
+#### Frontend returns 404
+
+```bash
+# Verify static files were copied
+docker exec -it codeview ls -la /app/static/
+
+# Rebuild the image
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+#### Database not persisting
+
+```bash
+# Ensure data directory exists
+mkdir -p ./data
+
+# Check volume mount
+docker inspect codeview | grep Mounts -A 10
+
+# Verify database file exists on host
+ls -la ./data/codeview.db
+```
+
 ## Contributing
 
 1. Fork the repository
