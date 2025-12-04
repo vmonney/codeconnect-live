@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Trash2, Loader2, Clock, Terminal } from 'lucide-react';
 import { CodeExecution } from '@/types';
+import { useInterviewStore } from '@/stores/interviewStore';
 
 interface OutputConsoleProps {
   onRun: () => Promise<void>;
@@ -10,8 +11,27 @@ interface OutputConsoleProps {
 }
 
 export function OutputConsole({ onRun, output, isRunning }: OutputConsoleProps) {
+  const pyodideStatus = useInterviewStore((state) => state.getPyodideStatus());
+  const isPyodideLoading = pyodideStatus === 'initializing';
+
   return (
-    <div className="h-full flex flex-col bg-card rounded-lg border border-border overflow-hidden">
+    <div className="h-full flex flex-col bg-card rounded-lg border border-border overflow-hidden relative">
+      {/* Pyodide Loading Overlay */}
+      {isPyodideLoading && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-center space-y-4 max-w-md p-6">
+            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Initializing Python</h3>
+              <p className="text-sm text-muted-foreground">
+                Loading Python runtime (Pyodide) for the first time.
+                This may take 10-15 seconds.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/30">
         <div className="flex items-center gap-2">
@@ -29,14 +49,16 @@ export function OutputConsole({ onRun, output, isRunning }: OutputConsoleProps) 
             variant="glow"
             size="sm"
             onClick={onRun}
-            disabled={isRunning}
+            disabled={isRunning || isPyodideLoading}
           >
-            {isRunning ? (
+            {isRunning || isPyodideLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Play className="h-4 w-4" />
             )}
-            <span className="ml-1">Run</span>
+            <span className="ml-1">
+              {isPyodideLoading ? 'Loading...' : 'Run'}
+            </span>
           </Button>
         </div>
       </div>

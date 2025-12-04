@@ -22,6 +22,8 @@ import {
   InterviewUpdateRequest,
   WebSocketMessage,
 } from '@/api/types';
+import { executeCodeWasm, isWasmSupported } from '@/services/codeExecutor';
+import type { ExecutionStatus } from '@/services/executionTypes';
 
 interface InterviewState {
   interviews: Interview[];
@@ -33,6 +35,7 @@ interface InterviewState {
   isLoading: boolean;
   error: string | null;
   wsConnection: WebSocket | null;
+  pyodideInitStatus: ExecutionStatus;
 
   // REST API Actions
   fetchInterviews: (filters?: { role?: 'interviewer' | 'candidate'; status?: InterviewStatus }) => Promise<void>;
@@ -81,6 +84,7 @@ interface InterviewState {
 
   // Code execution
   executeCode: (code: string, language: ProgrammingLanguage) => Promise<CodeExecution>;
+  getPyodideStatus: () => ExecutionStatus;
 
   // Stats
   getInterviewerStats: (userId: string) => Promise<{ total: number; avgDuration: number; completed: number }>;
@@ -245,6 +249,7 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   isLoading: false,
   error: null,
   wsConnection: null,
+  pyodideInitStatus: 'idle',
 
   // REST API Actions
   fetchInterviews: async (filters) => {
@@ -649,25 +654,51 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
   // Code execution
   executeCode: async (code, language) => {
     try {
-      const response = await httpClient.post<CodeExecuteResponse>('/code/execute', {
-        code,
-        language,
-        stdin: '',
-      });
+      // Check if language supports WASM execution
+      if (isWasmSupported(language)) {
+        // Update Pyodide loading status if needed
+        if (language === 'python' && get().pyodideInitStatus === 'idle') {
+          set({ pyodideInitStatus: 'initializing' });
+        }
+
+        // Execute via WASM
+        const result = await executeCodeWasm(code, language);
+
+        // Mark Pyodide as ready on successful Python execution
+        if (language === 'python') {
+          set({ pyodideInitStatus: 'idle' });
+        }
+
+        return result;
+      } else {
+        // Fallback to backend for unsupported languages (Java, C++, Go, Ruby)
+        const response = await httpClient.post<CodeExecuteResponse>('/code/execute', {
+          code,
+          language,
+          stdin: '',
+        });
+
+        return {
+          output: response.output,
+          error: response.error ?? undefined,
+          executionTime: response.execution_time,
+        };
+      }
+    } catch (error: any) {
+      // Reset Pyodide status on error
+      if (language === 'python') {
+        set({ pyodideInitStatus: 'error' });
+      }
 
       return {
-        output: response.output,
-        error: response.error ?? undefined,
-        executionTime: response.execution_time,
-      };
-    } catch (error) {
-      return {
         output: '',
-        error: 'Failed to execute code',
+        error: error.message || 'Failed to execute code',
         executionTime: 0,
       };
     }
   },
+
+  getPyodideStatus: () => get().pyodideInitStatus,
 
   // Stats
   getInterviewerStats: async (userId) => {

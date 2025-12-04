@@ -184,10 +184,22 @@ export default function InterviewRoom() {
     try {
       const result = await executeCode(code, language);
       setOutput(result);
+
       if (result.error) {
-        toast.error('Execution failed', { description: result.error.split('\n')[0] });
+        // Check for timeout errors
+        if (result.error.includes('timeout')) {
+          toast.error('Execution timeout', {
+            description: 'Code took too long to execute (limit: 5s)'
+          });
+        } else {
+          toast.error('Execution failed', {
+            description: result.error.split('\n')[0]
+          });
+        }
       } else {
-        toast.success('Code executed', { description: `Completed in ${result.executionTime}ms` });
+        toast.success('Code executed', {
+          description: `Completed in ${result.executionTime}ms`
+        });
       }
     } catch (error) {
       toast.error('Failed to execute code');
