@@ -1,6 +1,22 @@
 import { ApiError } from './types';
 
-const API_BASE = 'http://localhost:8000/api';
+// Determine API base URL based on environment
+function getApiBaseUrl(): string {
+  // Check if running in GitHub Codespaces
+  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
+    // In Codespaces, replace the frontend port with backend port in the URL
+    const url = new URL(window.location.href);
+    url.port = '';
+    // Codespace URLs are like: https://name-8080.app.github.dev
+    // We need: https://name-8000.app.github.dev/api
+    const hostname = url.hostname.replace('-8080.', '-8000.');
+    return `https://${hostname}/api`;
+  }
+  // Default for local development
+  return 'http://localhost:8000/api';
+}
+
+const API_BASE = getApiBaseUrl();
 
 // Token management
 export function getToken(): string | null {

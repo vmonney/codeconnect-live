@@ -19,15 +19,26 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str = '["http://localhost:8080", "http://127.0.0.1:8080"]'
 
+    # Codespaces environment detection
+    CODESPACE_NAME: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     @property
     def cors_origins_list(self) -> List[str]:
-        """Parse CORS_ORIGINS JSON string into list"""
+        """Parse CORS_ORIGINS JSON string into list, adding Codespaces URLs if applicable"""
+        origins = []
         try:
-            return json.loads(self.CORS_ORIGINS)
+            origins = json.loads(self.CORS_ORIGINS)
         except json.JSONDecodeError:
-            return ["http://localhost:8080", "http://127.0.0.1:8080"]
+            origins = ["http://localhost:8080", "http://127.0.0.1:8080"]
+
+        # Add Codespaces URL if running in GitHub Codespaces
+        if self.CODESPACE_NAME:
+            codespace_url = f"https://{self.CODESPACE_NAME}-8080.app.github.dev"
+            origins.append(codespace_url)
+
+        return origins
 
 
 settings = Settings()

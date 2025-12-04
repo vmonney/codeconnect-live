@@ -1,7 +1,19 @@
 import { getToken } from './httpClient';
 import { WebSocketMessage, WebSocketEventType } from './types';
 
-const WS_BASE = 'ws://localhost:8000/api';
+// Determine WebSocket base URL based on environment
+function getWsBaseUrl(): string {
+  // Check if running in GitHub Codespaces
+  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
+    // In Codespaces, use wss:// and replace the frontend port with backend port
+    const hostname = window.location.hostname.replace('-8080.', '-8000.');
+    return `wss://${hostname}/api`;
+  }
+  // Default for local development
+  return 'ws://localhost:8000/api';
+}
+
+const WS_BASE = getWsBaseUrl();
 
 export interface WebSocketHandlers {
   onMessage: (message: WebSocketMessage) => void;
