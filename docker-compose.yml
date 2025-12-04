@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  codeview:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codeview
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite database across container restarts
+      - ./data:/app/data
+    environment:
+      # Override environment variables
+      - DATABASE_URL=sqlite:///./data/codeview.db
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=10080
+      - DEBUG=false
+      - CORS_ORIGINS=["http://localhost:8000"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/docs')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

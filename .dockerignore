@@ -1,0 +1,51 @@
+# Python
+backend/__pycache__/
+backend/.pytest_cache/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.Python
+backend/venv/
+backend/.venv/
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+backend/tests/
+frontend/src/**/*.test.ts
+frontend/src/**/*.test.tsx
+
+# Other
+Thumbs.db
