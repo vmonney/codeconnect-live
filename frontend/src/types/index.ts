@@ -34,6 +34,8 @@ export interface Interview {
 
 export type ProgrammingLanguage = 'javascript' | 'python' | 'java' | 'cpp' | 'go' | 'ruby';
 
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
 export interface CodeTemplate {
   id: string;
   title: string;
@@ -43,7 +45,7 @@ export interface CodeTemplate {
   constraints: string;
   starterCode: Record<ProgrammingLanguage, string>;
   solution?: Record<ProgrammingLanguage, string>;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: Difficulty;
   tags: string[];
   createdBy: string;
   createdAt: string;

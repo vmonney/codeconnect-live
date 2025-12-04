@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, UserRole } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { httpClient, setToken, clearToken, getToken } from '@/api/httpClient';
+import { TokenResponse, BackendUser, ApiError } from '@/api/types';
 
 interface AuthState {
   user: User | null;
@@ -10,36 +11,21 @@ interface AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateProfile: (updates: Partial<User>) => void;
+  updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  initializeAuth: () => Promise<void>;
 }
 
-// Mock user database
-const mockUsers: Map<string, { user: User; password: string }> = new Map();
-
-// Pre-populate with demo users
-mockUsers.set('interviewer@demo.com', {
-  user: {
-    id: 'demo-interviewer',
-    email: 'interviewer@demo.com',
-    name: 'Alex Chen',
-    role: 'interviewer',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
-    createdAt: new Date().toISOString(),
-  },
-  password: 'demo123',
-});
-
-mockUsers.set('candidate@demo.com', {
-  user: {
-    id: 'demo-candidate',
-    email: 'candidate@demo.com',
-    name: 'Jordan Smith',
-    role: 'candidate',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jordan',
-    createdAt: new Date().toISOString(),
-  },
-  password: 'demo123',
-});
+// Transform backend user format to frontend User type
+function transformUser(backendUser: BackendUser): User {
+  return {
+    id: backendUser.id,
+    email: backendUser.email,
+    name: backendUser.name,
+    role: backendUser.role,
+    avatar: backendUser.avatar ?? undefined,
+    createdAt: backendUser.created_at,
+  };
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -50,83 +36,111 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         set({ isLoading: true });
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
 
-        const userData = mockUsers.get(email.toLowerCase());
-        
-        if (!userData) {
+        try {
+          const response = await httpClient.post<TokenResponse>('/auth/login', {
+            email,
+            password,
+          });
+
+          setToken(response.access_token);
+          const user = transformUser(response.user);
+
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+
+          return { success: true };
+        } catch (error) {
           set({ isLoading: false });
-          return { success: false, error: 'No account found with this email' };
+          const apiError = error as ApiError;
+          return { success: false, error: apiError.detail };
         }
-
-        if (userData.password !== password) {
-          set({ isLoading: false });
-          return { success: false, error: 'Incorrect password' };
-        }
-
-        set({ 
-          user: userData.user, 
-          isAuthenticated: true, 
-          isLoading: false 
-        });
-        
-        return { success: true };
       },
 
       signup: async (email, password, name, role) => {
         set({ isLoading: true });
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
 
-        if (mockUsers.has(email.toLowerCase())) {
+        try {
+          const response = await httpClient.post<TokenResponse>('/auth/signup', {
+            email,
+            password,
+            name,
+            role,
+          });
+
+          setToken(response.access_token);
+          const user = transformUser(response.user);
+
+          set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+
+          return { success: true };
+        } catch (error) {
           set({ isLoading: false });
-          return { success: false, error: 'An account with this email already exists' };
+          const apiError = error as ApiError;
+          return { success: false, error: apiError.detail };
         }
-
-        const newUser: User = {
-          id: uuidv4(),
-          email: email.toLowerCase(),
-          name,
-          role,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.replace(/\s/g, '')}`,
-          createdAt: new Date().toISOString(),
-        };
-
-        mockUsers.set(email.toLowerCase(), { user: newUser, password });
-
-        set({ 
-          user: newUser, 
-          isAuthenticated: true, 
-          isLoading: false 
-        });
-        
-        return { success: true };
       },
 
       logout: () => {
+        clearToken();
         set({ user: null, isAuthenticated: false });
       },
 
-      updateProfile: (updates) => {
+      updateProfile: async (updates) => {
         const { user } = get();
-        if (user) {
-          const updatedUser = { ...user, ...updates };
+        if (!user) {
+          return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+          const response = await httpClient.patch<BackendUser>(`/users/${user.id}`, {
+            name: updates.name,
+            avatar: updates.avatar,
+          });
+
+          const updatedUser = transformUser(response);
           set({ user: updatedUser });
-          
-          // Update mock database
-          const userData = mockUsers.get(user.email);
-          if (userData) {
-            mockUsers.set(user.email, { ...userData, user: updatedUser });
-          }
+
+          return { success: true };
+        } catch (error) {
+          const apiError = error as ApiError;
+          return { success: false, error: apiError.detail };
+        }
+      },
+
+      initializeAuth: async () => {
+        const token = getToken();
+        if (!token) {
+          set({ user: null, isAuthenticated: false });
+          return;
+        }
+
+        try {
+          const backendUser = await httpClient.get<BackendUser>('/auth/me');
+          set({
+            user: transformUser(backendUser),
+            isAuthenticated: true,
+          });
+        } catch {
+          // Token is invalid or expired
+          clearToken();
+          set({ user: null, isAuthenticated: false });
         }
       },
     }),
     {
       name: 'codeview-auth',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );

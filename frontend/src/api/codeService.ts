@@ -1,6 +1,6 @@
 import { CodeExecution, ProgrammingLanguage } from '@/types';
 
-// Mock code execution service
+// Mock code execution service (kept for reference/fallback)
 export async function mockCodeExecution(
   code: string,
   language: ProgrammingLanguage
@@ -22,7 +22,7 @@ export async function mockCodeExecution(
 
   // Mock successful output based on code patterns
   const output = generateMockOutput(code, language);
-  
+
   return {
     output,
     executionTime: Math.round(50 + Math.random() * 200),
@@ -95,7 +95,7 @@ function generateMockOutput(code: string, language: ProgrammingLanguage): string
   };
 
   const patterns = printPatterns[language] || [];
-  
+
   for (const pattern of patterns) {
     const matches = code.matchAll(pattern);
     for (const match of matches) {
@@ -129,41 +129,3 @@ function generateMockOutput(code: string, language: ProgrammingLanguage): string
 
   return output.trim();
 }
-
-// Centralized API service for future backend integration
-export const apiService = {
-  // Auth
-  login: async (email: string, password: string) => {
-    // Will be replaced with real API call
-    return { success: true };
-  },
-  
-  signup: async (email: string, password: string, name: string, role: string) => {
-    // Will be replaced with real API call
-    return { success: true };
-  },
-
-  // Interviews
-  createInterview: async (data: any) => {
-    // Will be replaced with real API call
-    return { success: true, data };
-  },
-
-  getInterviews: async (userId: string) => {
-    // Will be replaced with real API call
-    return { success: true, data: [] };
-  },
-
-  // Code execution
-  executeCode: async (code: string, language: ProgrammingLanguage) => {
-    return mockCodeExecution(code, language);
-  },
-
-  // WebSocket simulation
-  subscribeToInterview: (interviewId: string, callback: (event: any) => void) => {
-    // Will be replaced with real WebSocket connection
-    return {
-      unsubscribe: () => {},
-    };
-  },
-};

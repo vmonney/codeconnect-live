@@ -1,0 +1,19 @@
+{
+  "name": "codeconnect-live",
+  "version": "1.0.0",
+  "description": "CodeView - Coding Interview Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"yellow,cyan\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "test": "cd frontend && npm run test:run",
+    "test:watch": "cd frontend && npm run test",
+    "seed": "cd backend && uv run python scripts/seed_data.py",
+    "install:all": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
