@@ -3,13 +3,23 @@ import { WebSocketMessage, WebSocketEventType } from './types';
 
 // Determine WebSocket base URL based on environment
 function getWsBaseUrl(): string {
-  // Check if running in GitHub Codespaces
-  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    // In Codespaces, use wss:// and replace the frontend port with backend port
-    const hostname = window.location.hostname.replace('-8080.', '-8000.');
-    return `wss://${hostname}/api`;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    // Codespaces
+    if (hostname.includes('app.github.dev')) {
+      const wsHostname = hostname.replace('-8080.', '-8000.');
+      return `wss://${wsHostname}/api`;
+    }
+
+    // Production (Render or custom domain)
+    if (hostname.includes('.onrender.com') || !hostname.includes('localhost')) {
+      return `${protocol}//${hostname}/api`;
+    }
   }
-  // Default for local development
+
+  // Local development
   return 'ws://localhost:8000/api';
 }
 
