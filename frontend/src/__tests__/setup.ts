@@ -1,7 +1,19 @@
 import '@testing-library/jest-dom';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
+
+// Mock WASM code execution (Web Workers don't work in test environment)
+vi.mock('@/services/codeExecutor', () => ({
+  executeCodeWasm: vi.fn(async (_code: string, _language: string) => ({
+    output: 'Hello, World!',
+    error: undefined,
+    executionTime: 150,
+  })),
+  isWasmSupported: vi.fn((language: string) => language === 'python' || language === 'javascript'),
+  getWasmPyodideStatus: vi.fn(() => 'idle'),
+  preloadWasmRuntime: vi.fn(),
+}));
 
 // API Base URL
 const API_BASE = 'http://localhost:8000/api';
@@ -201,9 +213,7 @@ export const handlers = [
   }),
 
   // Code execution
-  http.post(`${API_BASE}/code/execute`, async ({ request }) => {
-    const body = (await request.json()) as { code: string; language: string };
-
+  http.post(`${API_BASE}/code/execute`, async () => {
     return HttpResponse.json({
       output: 'Hello, World!',
       error: null,
