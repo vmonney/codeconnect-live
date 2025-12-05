@@ -5,7 +5,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: starter  # Free tier
+    plan: free  # Free tier
     region: oregon
 
     # Environment variables
@@ -36,7 +36,7 @@ services:
 # PostgreSQL database
 databases:
   - name: codeconnect-db
-    plan: starter  # Free tier (1GB storage, expires after 90 days)
+    plan: free  # Free tier (1GB storage, expires after 90 days)
     databaseName: codeconnect
     user: codeconnect_user
     region: oregon
