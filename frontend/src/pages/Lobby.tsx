@@ -91,8 +91,6 @@ export default function Lobby() {
   };
 
   const allChecksPassed = Object.values(systemChecks).every(s => s === 'passed');
-  // Allow both interviewer and candidate to join (interviewer will start the session)
-  const isInterviewReady = true;
 
   const getCheckIcon = (status: string) => {
     switch (status) {
