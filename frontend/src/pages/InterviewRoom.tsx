@@ -58,13 +58,8 @@ export default function InterviewRoom() {
   const { getTemplateById } = useTemplateStore();
 
   const [interview, setInterview] = useState(id ? getInterviewById(id) : undefined);
+  const [isLoadingInterview, setIsLoadingInterview] = useState(false);
 
-  // Sync with store's currentInterview
-  useEffect(() => {
-    if (currentInterview && currentInterview.id === id) {
-      setInterview(currentInterview);
-    }
-  }, [currentInterview, id]);
   const [language, setLanguage] = useState<ProgrammingLanguage>(interview?.language || 'javascript');
   const [code, setCode] = useState(interview?.code || '');
   const [output, setOutput] = useState<CodeExecution | null>(null);
@@ -78,13 +73,25 @@ export default function InterviewRoom() {
   // Fetch interview from API if not in local store
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      // Redirect to auth with return URL
+      navigate(`/auth?returnUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
-    if (!interview && id) {
-      // Try to fetch interview from API
+    if (!id) return;
+
+    // Check if interview exists in local store
+    const localInterview = getInterviewById(id);
+    if (localInterview) {
+      setInterview(localInterview);
+      return;
+    }
+
+    // If not in store and not already loading, fetch from API
+    if (!isLoadingInterview) {
+      setIsLoadingInterview(true);
       fetchInterview(id).then((fetchedInterview) => {
+        setIsLoadingInterview(false);
         if (!fetchedInterview) {
           // Interview doesn't exist, redirect to dashboard
           toast.error('Interview not found');
@@ -93,18 +100,24 @@ export default function InterviewRoom() {
           setInterview(fetchedInterview);
         }
       });
-      return;
     }
-  }, [isAuthenticated, interview, id, navigate, fetchInterview]);
+  }, [isAuthenticated, id, navigate, fetchInterview, getInterviewById, isLoadingInterview]);
+
+  // Sync with store's currentInterview
+  useEffect(() => {
+    if (currentInterview && currentInterview.id === id) {
+      setInterview(currentInterview);
+    }
+  }, [currentInterview, id]);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      // Already handled by the first useEffect
       return;
     }
 
-    if (!interview && id) {
-      // Interview is being fetched, wait for it
+    // Wait for interview to load before joining
+    if (!interview || isLoadingInterview) {
       return;
     }
 

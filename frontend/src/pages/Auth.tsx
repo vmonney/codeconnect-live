@@ -24,18 +24,22 @@ export default function Auth() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      const returnUrl = searchParams.get('returnUrl');
+      navigate(returnUrl || '/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const returnUrl = searchParams.get('returnUrl');
+    const destination = returnUrl || '/dashboard';
+
     if (isLogin) {
       const result = await login(email, password);
       if (result.success) {
         toast.success('Welcome back!');
-        navigate('/dashboard');
+        navigate(destination);
       } else {
         toast.error(result.error || 'Login failed');
       }
@@ -47,7 +51,7 @@ export default function Auth() {
       const result = await signup(email, password, name, role);
       if (result.success) {
         toast.success('Account created successfully!');
-        navigate('/dashboard');
+        navigate(destination);
       } else {
         toast.error(result.error || 'Signup failed');
       }

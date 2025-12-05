@@ -70,34 +70,54 @@ export function InterviewerDashboard() {
       return;
     }
 
-    const interview = await createInterview(
-      title,
-      language,
-      user.id,
-      user.name,
-      selectedTemplate !== 'none' ? selectedTemplate : undefined
-    );
+    try {
+      console.log('Creating interview with:', { title, language, userId: user.id, userName: user.name, templateId: selectedTemplate });
 
-    if (!interview) {
-      toast.error('Failed to create interview');
-      return;
+      const interview = await createInterview(
+        title,
+        language,
+        user.id,
+        user.name,
+        selectedTemplate !== 'none' ? selectedTemplate : undefined
+      );
+
+      console.log('Interview created:', interview);
+
+      if (!interview) {
+        toast.error('Failed to create interview');
+        return;
+      }
+
+      setIsCreateOpen(false);
+      setTitle('');
+      setLanguage('javascript');
+      setSelectedTemplate('none');
+
+      // Copy full URL to clipboard (non-blocking)
+      const fullUrl = `${window.location.origin}${interview.shareLink}`;
+      console.log('Share link:', fullUrl);
+
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        toast.success('Interview created!', {
+          description: 'Link copied to clipboard!',
+        });
+      } catch (clipboardError) {
+        console.warn('Clipboard access denied:', clipboardError);
+        toast.success('Interview created!', {
+          description: 'Click the copy button to share the link.',
+        });
+      }
+
+    } catch (error) {
+      console.error('Error creating interview:', error);
+      toast.error('Failed to create interview: ' + (error as Error).message);
     }
-
-    setIsCreateOpen(false);
-    setTitle('');
-    setLanguage('javascript');
-    setSelectedTemplate('none');
-
-    toast.success('Interview created!', {
-      description: 'Share the link with your candidate.',
-    });
-
-    // Copy link to clipboard
-    navigator.clipboard.writeText(interview.shareLink);
   };
 
   const copyLink = (link: string, id: string) => {
-    navigator.clipboard.writeText(link);
+    const fullUrl = `${window.location.origin}${link}`;
+    navigator.clipboard.writeText(fullUrl);
     setCopiedId(id);
     toast.success('Link copied to clipboard!');
     setTimeout(() => setCopiedId(null), 2000);
