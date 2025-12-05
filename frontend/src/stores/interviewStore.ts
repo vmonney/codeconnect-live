@@ -368,7 +368,7 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
             }));
             break;
 
-          case 'chat_message':
+          case 'chat_message': {
             const chatMsg: ChatMessage = {
               id: message.id as string,
               interviewId,
@@ -381,6 +381,7 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
               chatMessages: [...state.chatMessages, chatMsg],
             }));
             break;
+          }
 
           case 'typing':
             set((state) => ({
@@ -407,12 +408,13 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
             }));
             break;
 
-          case 'participant_joined':
+          case 'participant_joined': {
             const newParticipant = transformParticipant(message.participant as BackendParticipant);
             set((state) => ({
               participants: [...state.participants.filter((p) => p.id !== newParticipant.id), newParticipant],
             }));
             break;
+          }
 
           case 'participant_left':
             set((state) => ({
@@ -420,10 +422,11 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
             }));
             break;
 
-          case 'participants_list':
+          case 'participants_list': {
             const participants = (message.participants as BackendParticipant[]).map(transformParticipant);
             set({ participants });
             break;
+          }
         }
       },
       onConnect: () => set({ error: null }),
@@ -626,15 +629,16 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
           executionTime: response.execution_time,
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       // Reset Pyodide status on error
       if (language === 'python') {
         set({ pyodideInitStatus: 'error' });
       }
 
+      const errorMessage = error instanceof Error ? error.message : 'Failed to execute code';
       return {
         output: '',
-        error: error.message || 'Failed to execute code',
+        error: errorMessage,
         executionTime: 0,
       };
     }

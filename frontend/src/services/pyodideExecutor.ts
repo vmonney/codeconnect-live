@@ -8,7 +8,7 @@
  * - Memory cleanup after execution
  */
 
-import { loadPyodide } from 'pyodide';
+import { loadPyodide, type PyodideInterface } from 'pyodide';
 import type { WasmExecutionResult, ExecutionStatus } from './executionTypes';
 import { executeWithTimeout, formatPythonError } from './executionUtils';
 
@@ -16,15 +16,15 @@ const DEFAULT_TIMEOUT = 5000; // 5 seconds
 const PYODIDE_CDN_URL = 'https://cdn.jsdelivr.net/pyodide/v0.29.0/full/';
 
 // Singleton instance
-let pyodideInstance: any = null;
-let loadingPromise: Promise<any> | null = null;
+let pyodideInstance: PyodideInterface | null = null;
+let loadingPromise: Promise<PyodideInterface> | null = null;
 let initializationStatus: ExecutionStatus = 'idle';
 
 /**
  * Initializes Pyodide runtime (lazy load, singleton pattern)
  * @returns Promise resolving to Pyodide instance
  */
-async function initializePyodide(): Promise<any> {
+async function initializePyodide(): Promise<PyodideInterface> {
   // Return existing instance if already loaded
   if (pyodideInstance) {
     return pyodideInstance;
@@ -55,10 +55,11 @@ async function initializePyodide(): Promise<any> {
       pyodideInstance = pyodide;
       initializationStatus = 'idle';
       return pyodide;
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       initializationStatus = 'error';
       loadingPromise = null; // Reset so user can retry
-      throw new Error(`Failed to initialize Pyodide: ${error.message}`);
+      throw new Error(`Failed to initialize Pyodide: ${errorMessage}`);
     }
   })();
 
@@ -131,15 +132,17 @@ export async function executePythonCode(
       output: output || '(no output)',
       executionTime: Date.now() - startTime,
     };
-  } catch (error: any) {
+  } catch (error) {
     initializationStatus = 'error';
 
     // Check if it's a Python error (from Pyodide) or JavaScript error
-    const isPythonError = error.message && error.message.includes('Traceback');
+    const errorObj = error as { message?: string };
+    const errorMessage = errorObj.message || String(error);
+    const isPythonError = errorMessage.includes('Traceback');
 
     return {
       output: '',
-      error: isPythonError ? formatPythonError(error.message) : error.message,
+      error: isPythonError ? formatPythonError(errorMessage) : errorMessage,
       executionTime: Date.now() - startTime,
     };
   } finally {
@@ -156,7 +159,7 @@ export async function executePythonCode(
  * Cleans up Python namespace to prevent memory leaks
  * @param pyodide Pyodide instance
  */
-async function cleanupPythonNamespace(pyodide: any): Promise<void> {
+async function cleanupPythonNamespace(pyodide: PyodideInterface): Promise<void> {
   try {
     await pyodide.runPythonAsync(`
       import sys

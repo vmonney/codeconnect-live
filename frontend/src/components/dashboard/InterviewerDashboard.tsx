@@ -54,15 +54,15 @@ export function InterviewerDashboard() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, completed: 0, avgDuration: 0 });
 
-  if (!user) return null;
-
-  const userInterviews = getInterviewsByUser(user.id, 'interviewer');
-
   useEffect(() => {
     if (user) {
       getInterviewerStats(user.id).then(setStats);
     }
   }, [user, getInterviewerStats]);
+
+  if (!user) return null;
+
+  const userInterviews = getInterviewsByUser(user.id, 'interviewer');
 
   const handleCreateInterview = () => {
     if (!title.trim()) {

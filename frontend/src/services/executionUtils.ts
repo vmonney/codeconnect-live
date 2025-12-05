@@ -26,7 +26,7 @@ export async function executeWithTimeout<T>(
  * @param value Any JavaScript value
  * @returns Formatted string representation
  */
-export function formatValue(value: any): string {
+export function formatValue(value: unknown): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   if (typeof value === 'string') return value;
@@ -50,15 +50,16 @@ export function formatValue(value: any): string {
  * @param error Error object
  * @returns Formatted error message with stack trace
  */
-export function formatError(error: any): string {
+export function formatError(error: unknown): string {
   if (!error) return 'Unknown error';
 
-  const message = error.message || String(error);
-  const name = error.name || 'Error';
+  const errorObj = error as { message?: string; name?: string; stack?: string };
+  const message = errorObj.message || String(error);
+  const name = errorObj.name || 'Error';
 
   // Include stack trace if available, but clean it up
-  if (error.stack) {
-    const stack = error.stack
+  if (errorObj.stack) {
+    const stack = errorObj.stack
       .split('\n')
       // Remove internal frames from our execution code
       .filter((line: string) => !line.includes('executionUtils.ts'))

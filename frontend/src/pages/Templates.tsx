@@ -178,7 +178,7 @@ export default function Templates() {
                   </div>
                   <div className="space-y-2">
                     <Label>Difficulty</Label>
-                    <Select value={difficulty} onValueChange={(v) => setDifficulty(v as any)}>
+                    <Select value={difficulty} onValueChange={(v) => setDifficulty(v as 'easy' | 'medium' | 'hard')}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

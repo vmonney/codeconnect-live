@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import { ProgrammingLanguage, Participant } from '@/types';
+import type { editor } from 'monaco-editor';
 
 interface CodeEditorProps {
   code: string;
@@ -24,7 +25,7 @@ export function CodeEditor({
   theme = 'vs-dark',
   readOnly = false,
 }: CodeEditorProps) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const decorationsRef = useRef<string[]>([]);
 
   const handleEditorMount: OnMount = (editor, monaco) => {
@@ -88,7 +89,7 @@ export function CodeEditor({
     if (!editorRef.current) return;
 
     const editor = editorRef.current;
-    const newDecorations: any[] = [];
+    const newDecorations: editor.IModelDeltaDecoration[] = [];
 
     participants.forEach((participant) => {
       if (participant.cursorPosition) {

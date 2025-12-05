@@ -31,18 +31,23 @@ export default function Profile() {
   const [name, setName] = useState(user?.name || '');
   const [stats, setStats] = useState<{ total: number; completed: number; avgDuration: number } | null>(null);
 
-  if (!isAuthenticated || !user) {
-    navigate('/auth');
-    return null;
-  }
-
-  const userInterviews = getInterviewsByUser(user.id, user.role);
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     if (user?.role === 'interviewer') {
       getInterviewerStats(user.id).then(setStats);
     }
   }, [user, getInterviewerStats]);
+
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+
+  const userInterviews = getInterviewsByUser(user.id, user.role);
 
   const handleSave = () => {
     if (!name.trim()) {
