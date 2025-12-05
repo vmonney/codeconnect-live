@@ -5,13 +5,83 @@ A professional coding interview platform with real-time collaborative code editi
 ## Features
 
 - Real-time collaborative code editing with Monaco Editor
-- Multi-language support (JavaScript, Python, Java, C++, Go, Ruby)
-- Live code execution
+- Multi-language support (JavaScript and Python with browser-based WASM execution)
+- Live code execution (Pyodide for Python, native JS)
 - Real-time chat messaging
 - Cursor position tracking across participants
 - Interview scheduling and management
 - Code template library
 - Role-based dashboards (Interviewer/Candidate)
+
+## Running Modes
+
+You can run this application in two ways:
+
+### 🐳 **Docker Mode (Production-like)** ✅ Recommended for deployment
+- Single containerized application
+- Frontend and backend in one container
+- Database persistence via volume mount
+- Access at: **http://localhost:8000**
+
+### 💻 **Development Mode** ✅ Recommended for coding
+- Hot-reload for both frontend and backend
+- Frontend: http://localhost:8080
+- Backend: http://localhost:8000
+- Better for active development
+
+**⚠️ Important**: You cannot run both modes simultaneously as they both use port 8000!
+
+Choose one mode below based on your needs.
+
+---
+
+## 🐳 Quick Start with Docker
+
+Perfect for testing or production deployment:
+
+```bash
+# Start the containerized app
+docker-compose up -d
+
+# Seed demo data (optional)
+docker exec -it codeview uv run python scripts/seed_data.py
+
+# View logs
+docker-compose logs -f
+
+# Stop the container
+docker-compose down
+```
+
+**Access the app**: http://localhost:8000
+
+---
+
+## 💻 Quick Start for Development
+
+Perfect for coding with hot-reload:
+
+```bash
+# Make sure Docker container is stopped first!
+docker-compose down
+
+# Install dependencies
+npm install
+npm run install:all
+cd backend && uv sync && cd ..
+
+# Seed demo data
+npm run seed
+
+# Start both services with hot-reload
+npm run dev
+```
+
+**Access the app**:
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:8000/api/docs
+
+---
 
 ## Tech Stack
 
@@ -31,42 +101,15 @@ A professional coding interview platform with real-time collaborative code editi
 
 ## Prerequisites
 
+### For Docker Mode
+- Docker and Docker Compose
+
+### For Development Mode
 - Node.js 18+
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 
-## Quick Start
-
-### 1. Install Dependencies
-
-```bash
-cd codeconnect-live
-
-# Install root dependencies (concurrently)
-npm install
-
-# Install frontend dependencies
-npm run install:all
-
-# Install backend dependencies
-cd backend && uv sync && cd ..
-```
-
-### 2. Seed Demo Data
-
-```bash
-npm run seed
-```
-
-### 3. Start Both Services
-
-```bash
-npm run dev
-```
-
-This runs both the backend (http://localhost:8000) and frontend (http://localhost:8080) concurrently.
-
-### Alternative: Start Services Separately
+## Alternative: Start Services Separately (Development Mode)
 
 **Backend:**
 ```bash
@@ -249,31 +292,18 @@ The frontend uses the following defaults:
 - API Base URL: `http://localhost:8000/api`
 - WebSocket URL: `ws://localhost:8000/api`
 
-## Docker Deployment
+## Docker Deployment Details
 
-The application can be containerized and run in a single Docker container that serves both the backend and frontend.
+The application is containerized in a single Docker container that serves both the backend and frontend.
 
 ### Base Images
 
 - **Frontend Build**: `node:22-alpine` (for building React/Vite app)
 - **Backend Runtime**: `python:3.12-slim` (for running FastAPI + serving frontend)
 
-### Quick Start with Docker
+### Docker CLI Alternative
 
-#### Option 1: Docker Compose (Recommended)
-
-```bash
-# Build and start the container
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the container
-docker-compose down
-```
-
-#### Option 2: Docker CLI
+If you prefer not to use Docker Compose:
 
 ```bash
 # Build the image
@@ -293,7 +323,7 @@ docker run -d \
 # View logs
 docker logs -f codeview
 
-# Stop the container
+# Stop and remove
 docker stop codeview
 docker rm codeview
 ```
@@ -374,11 +404,15 @@ docker-compose up -d
    ```javascript
    console.log("Hello from Docker!");
    ```
+   Should output: `Hello from Docker!`
+
 4. Select **Python** and run:
    ```python
    print("Hello from Docker!")
    ```
-5. Both should execute successfully (WASM browser-based execution)
+   Should output: `Hello from Docker!`
+
+Both languages use browser-based WASM execution (Pyodide for Python, native for JavaScript).
 
 #### 8. Inspect Container
 

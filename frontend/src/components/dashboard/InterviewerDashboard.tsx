@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useInterviewStore } from '@/stores/interviewStore';
@@ -39,10 +39,6 @@ import { toast } from 'sonner';
 const LANGUAGES: { value: ProgrammingLanguage; label: string }[] = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'go', label: 'Go' },
-  { value: 'ruby', label: 'Ruby' },
 ];
 
 export function InterviewerDashboard() {
@@ -56,11 +52,17 @@ export function InterviewerDashboard() {
   const [language, setLanguage] = useState<ProgrammingLanguage>('javascript');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('none');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [stats, setStats] = useState({ total: 0, completed: 0, avgDuration: 0 });
 
   if (!user) return null;
 
   const userInterviews = getInterviewsByUser(user.id, 'interviewer');
-  const stats = getInterviewerStats(user.id);
+
+  useEffect(() => {
+    if (user) {
+      getInterviewerStats(user.id).then(setStats);
+    }
+  }, [user, getInterviewerStats]);
 
   const handleCreateInterview = () => {
     if (!title.trim()) {

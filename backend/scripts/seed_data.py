@@ -86,10 +86,6 @@ Output: [1,2]
             "starter_code": {
                 "javascript": "function twoSum(nums, target) {\n    // Your code here\n}",
                 "python": "def two_sum(nums, target):\n    # Your code here\n    pass",
-                "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Your code here\n    }\n}",
-                "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Your code here\n    }\n};",
-                "go": "func twoSum(nums []int, target int) []int {\n    // Your code here\n}",
-                "ruby": "def two_sum(nums, target)\n    # Your code here\nend",
             },
             "difficulty": Difficulty.EASY,
             "tags": ["Array", "Hash Table"],
@@ -127,10 +123,6 @@ Output: false
             "starter_code": {
                 "javascript": "function isValid(s) {\n    // Your code here\n}",
                 "python": "def is_valid(s):\n    # Your code here\n    pass",
-                "java": "class Solution {\n    public boolean isValid(String s) {\n        // Your code here\n    }\n}",
-                "cpp": "class Solution {\npublic:\n    bool isValid(string s) {\n        // Your code here\n    }\n};",
-                "go": "func isValid(s string) bool {\n    // Your code here\n}",
-                "ruby": "def is_valid(s)\n    # Your code here\nend",
             },
             "difficulty": Difficulty.EASY,
             "tags": ["String", "Stack"],
@@ -163,10 +155,6 @@ Output: []
             "starter_code": {
                 "javascript": "function reverseList(head) {\n    // Your code here\n}",
                 "python": "def reverse_list(head):\n    # Your code here\n    pass",
-                "java": "class Solution {\n    public ListNode reverseList(ListNode head) {\n        // Your code here\n    }\n}",
-                "cpp": "class Solution {\npublic:\n    ListNode* reverseList(ListNode* head) {\n        // Your code here\n    }\n};",
-                "go": "func reverseList(head *ListNode) *ListNode {\n    // Your code here\n}",
-                "ruby": "def reverse_list(head)\n    # Your code here\nend",
             },
             "difficulty": Difficulty.EASY,
             "tags": ["Linked List", "Recursion"],

@@ -37,10 +37,6 @@ def detect_errors(code: str, language: ProgrammingLanguage) -> str | None:
     error_checks = {
         ProgrammingLanguage.JAVASCRIPT: lambda: check_javascript_errors(code),
         ProgrammingLanguage.PYTHON: lambda: check_python_errors(code),
-        ProgrammingLanguage.JAVA: lambda: check_java_errors(code),
-        ProgrammingLanguage.CPP: lambda: check_cpp_errors(code),
-        ProgrammingLanguage.GO: lambda: check_go_errors(code),
-        ProgrammingLanguage.RUBY: lambda: check_ruby_errors(code),
     }
 
     checker = error_checks.get(language)
@@ -63,36 +59,6 @@ def check_python_errors(code: str) -> str | None:
     return None
 
 
-def check_java_errors(code: str) -> str | None:
-    if "class " not in code:
-        return "Error: No class definition found"
-    if "public static void main" not in code:
-        return "Error: Main method not found"
-    return None
-
-
-def check_cpp_errors(code: str) -> str | None:
-    if "#include" not in code:
-        return "Error: Missing include statements"
-    if code.count("{") != code.count("}"):
-        return "Error: Unmatched braces"
-    return None
-
-
-def check_go_errors(code: str) -> str | None:
-    if "package main" not in code:
-        return "Error: Missing package main"
-    if "func main()" not in code:
-        return "Error: Missing main function"
-    return None
-
-
-def check_ruby_errors(code: str) -> str | None:
-    if "pust " in code:
-        return "NoMethodError: undefined method 'pust'"
-    return None
-
-
 def generate_mock_output(code: str, language: ProgrammingLanguage) -> str:
     """Generate mock output based on code patterns"""
     import re
@@ -105,19 +71,6 @@ def generate_mock_output(code: str, language: ProgrammingLanguage) -> str:
         ProgrammingLanguage.PYTHON: [
             (r'print\(["\'](.+?)["\']\)', r"\1"),
             (r"print\((.+?)\)", r"\1"),
-        ],
-        ProgrammingLanguage.JAVA: [
-            (r'System\.out\.println\(["\'](.+?)["\']\)', r"\1"),
-        ],
-        ProgrammingLanguage.CPP: [
-            (r'cout\s*<<\s*["\'](.+?)["\']', r"\1"),
-        ],
-        ProgrammingLanguage.GO: [
-            (r'fmt\.Println\(["\'](.+?)["\']\)', r"\1"),
-        ],
-        ProgrammingLanguage.RUBY: [
-            (r'puts\s+["\'](.+?)["\']', r"\1"),
-            (r"puts\s+(.+)", r"\1"),
         ],
     }
 

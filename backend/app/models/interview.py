@@ -15,10 +15,6 @@ class InterviewStatus(str, enum.Enum):
 class ProgrammingLanguage(str, enum.Enum):
     JAVASCRIPT = "javascript"
     PYTHON = "python"
-    JAVA = "java"
-    CPP = "cpp"
-    GO = "go"
-    RUBY = "ruby"
 
 
 class Interview(Base):

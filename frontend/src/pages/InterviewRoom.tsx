@@ -30,20 +30,16 @@ import { Link } from 'react-router-dom';
 const LANGUAGES: { value: ProgrammingLanguage; label: string }[] = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'go', label: 'Go' },
-  { value: 'ruby', label: 'Ruby' },
 ];
 
 export default function InterviewRoom() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
-  const { 
-    getInterviewById, 
-    updateInterview, 
-    updateCode, 
+  const {
+    getInterviewById,
+    updateInterview,
+    updateCode,
     executeCode,
     chatMessages,
     sendMessage,
@@ -52,6 +48,10 @@ export default function InterviewRoom() {
     participants,
     joinInterview,
     leaveInterview,
+    connectToInterview,
+    disconnectFromInterview,
+    sendCodeUpdate,
+    sendLanguageChange,
   } = useInterviewStore();
   const { getTemplateById } = useTemplateStore();
 
@@ -61,7 +61,6 @@ export default function InterviewRoom() {
   const [output, setOutput] = useState<CodeExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
-  const [simulatedParticipants, setSimulatedParticipants] = useState<Participant[]>([]);
 
   const template = interview?.templateId ? getTemplateById(interview.templateId) : undefined;
   const isInterviewer = user?.role === 'interviewer' && interview?.interviewerId === user?.id;
@@ -92,6 +91,9 @@ export default function InterviewRoom() {
       };
       joinInterview(id, participant);
 
+      // Connect to WebSocket for real-time collaboration
+      connectToInterview(id);
+
       // Start interview if interviewer
       if (isInterviewer && interview?.status === 'scheduled') {
         updateInterview(id, {
@@ -104,9 +106,11 @@ export default function InterviewRoom() {
     return () => {
       if (user && id) {
         leaveInterview(id, user.id);
+        // Disconnect WebSocket
+        disconnectFromInterview();
       }
     };
-  }, [isAuthenticated, interview, id, user, navigate, isInterviewer]);
+  }, [isAuthenticated, interview, id, user, navigate, isInterviewer, connectToInterview, disconnectFromInterview, joinInterview, leaveInterview, updateInterview]);
 
   // Sync code changes
   useEffect(() => {
@@ -115,42 +119,6 @@ export default function InterviewRoom() {
       setLanguage(interview.language);
     }
   }, [interview]);
-
-  // Simulate other participants for demo purposes
-  useEffect(() => {
-    if (!id || !user) return;
-
-    // Add a simulated participant after a short delay
-    const addParticipantTimeout = setTimeout(() => {
-      const fakeParticipant: Participant = {
-        id: 'simulated-user-1',
-        name: user.role === 'interviewer' ? 'Alex (Candidate)' : 'Sarah (Interviewer)',
-        role: user.role === 'interviewer' ? 'candidate' : 'interviewer',
-        isOnline: true,
-        cursorColor: '#a855f7',
-        cursorPosition: { line: 5, column: 10 },
-      };
-      setSimulatedParticipants([fakeParticipant]);
-    }, 2000);
-
-    // Simulate cursor movement
-    const cursorInterval = setInterval(() => {
-      setSimulatedParticipants(prev => 
-        prev.map(p => ({
-          ...p,
-          cursorPosition: {
-            line: Math.max(1, Math.min(20, (p.cursorPosition?.line || 5) + Math.floor(Math.random() * 3) - 1)),
-            column: Math.max(1, Math.min(40, (p.cursorPosition?.column || 10) + Math.floor(Math.random() * 5) - 2)),
-          }
-        }))
-      );
-    }, 3000);
-
-    return () => {
-      clearTimeout(addParticipantTimeout);
-      clearInterval(cursorInterval);
-    };
-  }, [id, user]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -168,14 +136,16 @@ export default function InterviewRoom() {
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
     if (id) {
-      updateCode(id, newCode);
+      updateCode(id, newCode); // Local state (immediate feedback)
+      sendCodeUpdate(newCode);  // Send via WebSocket
     }
-  }, [id, updateCode]);
+  }, [id, updateCode, sendCodeUpdate]);
 
   const handleLanguageChange = (newLanguage: ProgrammingLanguage) => {
     setLanguage(newLanguage);
     if (id) {
       updateInterview(id, { language: newLanguage });
+      sendLanguageChange(newLanguage); // Send via WebSocket
     }
   };
 
@@ -326,8 +296,8 @@ export default function InterviewRoom() {
                 <ProblemPanel template={template} />
               </div>
               <div className="h-[250px] flex-shrink-0">
-                <VideoPanel 
-                  participants={[...participants.filter(p => p.id !== user?.id), ...simulatedParticipants]} 
+                <VideoPanel
+                  participants={participants.filter(p => p.id !== user?.id)}
                   localParticipant={localParticipant}
                 />
               </div>
@@ -344,7 +314,7 @@ export default function InterviewRoom() {
                   code={code}
                   language={language}
                   onChange={handleCodeChange}
-                  participants={[...participants.filter(p => p.id !== user?.id), ...simulatedParticipants]}
+                  participants={participants.filter(p => p.id !== user?.id)}
                   theme={theme}
                 />
               </div>

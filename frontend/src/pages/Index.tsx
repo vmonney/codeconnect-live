@@ -42,7 +42,7 @@ const features = [
   {
     icon: Globe,
     title: 'Multi-Language',
-    description: 'Support for JavaScript, Python, Java, C++, Go, and Ruby.',
+    description: 'Support for JavaScript and Python with browser-based WASM execution.',
   },
 ];
 

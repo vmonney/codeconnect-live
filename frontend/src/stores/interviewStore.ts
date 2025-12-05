@@ -176,64 +176,6 @@ def solution(input):
 # Test your solution
 print(solution("Hello, World!"))
 `,
-    java: `// Welcome to CodeView Interview Platform
-// Write your solution below
-
-public class Solution {
-    public static void main(String[] args) {
-        System.out.println(solution("Hello, World!"));
-    }
-
-    public static String solution(String input) {
-        // Your code here
-        return input;
-    }
-}
-`,
-    cpp: `// Welcome to CodeView Interview Platform
-// Write your solution below
-
-#include <iostream>
-#include <string>
-using namespace std;
-
-string solution(string input) {
-    // Your code here
-    return input;
-}
-
-int main() {
-    cout << solution("Hello, World!") << endl;
-    return 0;
-}
-`,
-    go: `// Welcome to CodeView Interview Platform
-// Write your solution below
-
-package main
-
-import "fmt"
-
-func solution(input string) string {
-    // Your code here
-    return input
-}
-
-func main() {
-    fmt.Println(solution("Hello, World!"))
-}
-`,
-    ruby: `# Welcome to CodeView Interview Platform
-# Write your solution below
-
-def solution(input)
-  # Your code here
-  input
-end
-
-# Test your solution
-puts solution("Hello, World!")
-`,
   };
 
   return starters[language];

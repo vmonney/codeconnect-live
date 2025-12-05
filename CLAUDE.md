@@ -178,8 +178,9 @@ Main routes defined in `src/App.tsx`:
 
 ### Supported Languages
 
-6 languages with Monaco editor syntax highlighting and mock execution:
-- `javascript`, `python`, `java`, `cpp`, `go`, `ruby`
+2 languages with Monaco editor syntax highlighting and execution support:
+- `javascript` - JavaScript with browser-based WASM execution
+- `python` - Python with Pyodide WASM execution
 
 Each has starter code template in `interviewStore.ts:getStarterCode()`.
 

@@ -66,16 +66,6 @@ app.include_router(code_execution.router)
 app.include_router(websocket.router)
 
 
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "CodeView Backend API",
-        "version": "1.0.0",
-        "docs": "/api/docs",
-    }
-
-
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

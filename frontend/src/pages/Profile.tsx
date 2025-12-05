@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useInterviewStore } from '@/stores/interviewStore';
@@ -29,6 +29,7 @@ export default function Profile() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
+  const [stats, setStats] = useState<{ total: number; completed: number; avgDuration: number } | null>(null);
 
   if (!isAuthenticated || !user) {
     navigate('/auth');
@@ -36,7 +37,12 @@ export default function Profile() {
   }
 
   const userInterviews = getInterviewsByUser(user.id, user.role);
-  const stats = user.role === 'interviewer' ? getInterviewerStats(user.id) : null;
+
+  useEffect(() => {
+    if (user?.role === 'interviewer') {
+      getInterviewerStats(user.id).then(setStats);
+    }
+  }, [user, getInterviewerStats]);
 
   const handleSave = () => {
     if (!name.trim()) {

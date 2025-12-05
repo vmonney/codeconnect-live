@@ -55,64 +55,6 @@ def solution(input):
 # Test your solution
 print(solution("Hello, World!"))
 """,
-        ProgrammingLanguage.JAVA: """// Welcome to CodeView Interview Platform
-// Write your solution below
-
-public class Solution {
-    public static void main(String[] args) {
-        System.out.println(solution("Hello, World!"));
-    }
-
-    public static String solution(String input) {
-        // Your code here
-        return input;
-    }
-}
-""",
-        ProgrammingLanguage.CPP: """// Welcome to CodeView Interview Platform
-// Write your solution below
-
-#include <iostream>
-#include <string>
-using namespace std;
-
-string solution(string input) {
-    // Your code here
-    return input;
-}
-
-int main() {
-    cout << solution("Hello, World!") << endl;
-    return 0;
-}
-""",
-        ProgrammingLanguage.GO: """// Welcome to CodeView Interview Platform
-// Write your solution below
-
-package main
-
-import "fmt"
-
-func solution(input string) string {
-    // Your code here
-    return input
-}
-
-func main() {
-    fmt.Println(solution("Hello, World!"))
-}
-""",
-        ProgrammingLanguage.RUBY: """# Welcome to CodeView Interview Platform
-# Write your solution below
-
-def solution(input)
-  # Your code here
-  input
-end
-
-# Test your solution
-puts solution("Hello, World!")
-""",
     }
     return starters.get(language, "// Start coding here...")
 

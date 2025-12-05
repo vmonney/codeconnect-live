@@ -117,10 +117,6 @@ export default function Templates() {
       starterCode: {
         javascript: starterCode,
         python: starterCode,
-        java: starterCode,
-        cpp: starterCode,
-        go: starterCode,
-        ruby: starterCode,
       } as Record<ProgrammingLanguage, string>,
       createdBy: user.id,
     };

@@ -14,10 +14,6 @@ interface CodeEditorProps {
 const LANGUAGE_MAP: Record<ProgrammingLanguage, string> = {
   javascript: 'javascript',
   python: 'python',
-  java: 'java',
-  cpp: 'cpp',
-  go: 'go',
-  ruby: 'ruby',
 };
 
 export function CodeEditor({

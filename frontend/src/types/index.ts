@@ -32,7 +32,7 @@ export interface Interview {
   shareLink: string;
 }
 
-export type ProgrammingLanguage = 'javascript' | 'python' | 'java' | 'cpp' | 'go' | 'ruby';
+export type ProgrammingLanguage = 'javascript' | 'python';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
