@@ -31,7 +31,7 @@ services:
     healthCheckPath: /health
 
     # Auto-deploy on push to main
-    autoDeploy: false  # Controlled by GitHub Actions instead
+    autoDeploy: true  # Automatically deploy when pushing to GitHub
 
 # PostgreSQL database
 databases:
