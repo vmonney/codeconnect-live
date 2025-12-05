@@ -91,8 +91,8 @@ export default function Lobby() {
   };
 
   const allChecksPassed = Object.values(systemChecks).every(s => s === 'passed');
-  const isInterviewReady = interview?.status === 'in-progress' || 
-    (interview?.interviewerId === user?.id);
+  // Allow both interviewer and candidate to join (interviewer will start the session)
+  const isInterviewReady = true;
 
   const getCheckIcon = (status: string) => {
     switch (status) {
@@ -215,11 +215,11 @@ export default function Lobby() {
                 </div>
               </div>
 
-              {/* Status */}
-              {!isInterviewReady && allChecksPassed && (
-                <div className="p-4 rounded-lg bg-warning/10 border border-warning/20 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-warning" />
-                  <p className="text-sm text-warning">Waiting for the host to start the session...</p>
+              {/* Status - Show interview info */}
+              {allChecksPassed && interview && (
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                  <CheckCircle2 className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-primary">Ready to join!</p>
                 </div>
               )}
 
@@ -228,7 +228,7 @@ export default function Lobby() {
                 variant="glow"
                 size="xl"
                 className="w-full"
-                disabled={!allChecksPassed || isJoining || (!isInterviewReady && user?.role === 'candidate')}
+                disabled={!allChecksPassed || isJoining}
                 onClick={handleJoinInterview}
               >
                 {isJoining ? (
