@@ -38,6 +38,7 @@ export default function InterviewRoom() {
   const { user, isAuthenticated } = useAuthStore();
   const {
     getInterviewById,
+    fetchInterview,
     updateInterview,
     updateCode,
     executeCode,
@@ -52,10 +53,18 @@ export default function InterviewRoom() {
     disconnectFromInterview,
     sendCodeUpdate,
     sendLanguageChange,
+    currentInterview,
   } = useInterviewStore();
   const { getTemplateById } = useTemplateStore();
 
   const [interview, setInterview] = useState(id ? getInterviewById(id) : undefined);
+
+  // Sync with store's currentInterview
+  useEffect(() => {
+    if (currentInterview && currentInterview.id === id) {
+      setInterview(currentInterview);
+    }
+  }, [currentInterview, id]);
   const [language, setLanguage] = useState<ProgrammingLanguage>(interview?.language || 'javascript');
   const [code, setCode] = useState(interview?.code || '');
   const [output, setOutput] = useState<CodeExecution | null>(null);
@@ -66,6 +75,7 @@ export default function InterviewRoom() {
   const isInterviewer = user?.role === 'interviewer' && interview?.interviewerId === user?.id;
   const interviewMessages = chatMessages.filter(m => m.interviewId === id);
 
+  // Fetch interview from API if not in local store
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -73,9 +83,28 @@ export default function InterviewRoom() {
     }
 
     if (!interview && id) {
-      // Interview doesn't exist, redirect to dashboard
-      toast.error('Interview not found');
-      navigate('/dashboard');
+      // Try to fetch interview from API
+      fetchInterview(id).then((fetchedInterview) => {
+        if (!fetchedInterview) {
+          // Interview doesn't exist, redirect to dashboard
+          toast.error('Interview not found');
+          navigate('/dashboard');
+        } else {
+          setInterview(fetchedInterview);
+        }
+      });
+      return;
+    }
+  }, [isAuthenticated, interview, id, navigate, fetchInterview]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+
+    if (!interview && id) {
+      // Interview is being fetched, wait for it
       return;
     }
 

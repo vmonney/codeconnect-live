@@ -64,19 +64,24 @@ export function InterviewerDashboard() {
 
   const userInterviews = getInterviewsByUser(user.id, 'interviewer');
 
-  const handleCreateInterview = () => {
+  const handleCreateInterview = async () => {
     if (!title.trim()) {
       toast.error('Please enter an interview title');
       return;
     }
 
-    const interview = createInterview(
+    const interview = await createInterview(
       title,
       language,
       user.id,
       user.name,
       selectedTemplate !== 'none' ? selectedTemplate : undefined
     );
+
+    if (!interview) {
+      toast.error('Failed to create interview');
+      return;
+    }
 
     setIsCreateOpen(false);
     setTitle('');
