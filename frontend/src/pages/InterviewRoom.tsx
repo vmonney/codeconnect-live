@@ -65,6 +65,7 @@ export default function InterviewRoom() {
   const [output, setOutput] = useState<CodeExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   const template = interview?.templateId ? getTemplateById(interview.templateId) : undefined;
   const isInterviewer = user?.role === 'interviewer' && interview?.interviewerId === user?.id;
@@ -136,11 +137,18 @@ export default function InterviewRoom() {
       // Connect to WebSocket for real-time collaboration
       connectToInterview(id);
 
-      // Start interview if interviewer
+      // Update interview based on role
       if (isInterviewer && interview?.status === 'scheduled') {
+        // Start interview if interviewer
         updateInterview(id, {
           status: 'in-progress',
           startedAt: new Date().toISOString(),
+        });
+      } else if (user.role === 'candidate' && !interview?.candidateId) {
+        // Add candidate to interview if not already set
+        updateInterview(id, {
+          candidateId: user.id,
+          candidateName: user.name,
         });
       }
     }

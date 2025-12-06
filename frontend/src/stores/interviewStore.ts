@@ -435,12 +435,16 @@ export const useInterviewStore = create<InterviewState>((set, get) => ({
     });
 
     set({ wsConnection: ws });
+
+    // Fetch existing messages from backend
+    get().fetchMessages(interviewId);
   },
 
   disconnectFromInterview: () => {
     const { wsConnection } = get();
     wsConnection?.close();
-    set({ wsConnection: null, participants: [], chatMessages: [] });
+    // Don't clear chat messages - they should persist even after disconnect
+    set({ wsConnection: null, participants: [] });
   },
 
   sendCodeUpdate: (code) => {

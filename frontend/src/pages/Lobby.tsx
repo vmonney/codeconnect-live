@@ -4,11 +4,11 @@ import { useAuthStore } from '@/stores/authStore';
 import { useInterviewStore } from '@/stores/interviewStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Video, 
-  VideoOff, 
-  Mic, 
-  MicOff, 
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
   Monitor,
   CheckCircle2,
   XCircle,
@@ -16,12 +16,13 @@ import {
   Code2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function Lobby() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
-  const { getInterviewById, updateInterview } = useInterviewStore();
+  const { getInterviewById, fetchInterview, updateInterview } = useInterviewStore();
 
   const [interview, setInterview] = useState(id ? getInterviewById(id) : undefined);
   const [isVideoOn, setIsVideoOn] = useState(true);
@@ -33,6 +34,7 @@ export default function Lobby() {
     connection: 'checking',
   });
   const [isJoining, setIsJoining] = useState(false);
+  const [isLoadingInterview, setIsLoadingInterview] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -44,13 +46,13 @@ export default function Lobby() {
     const runChecks = async () => {
       await new Promise(r => setTimeout(r, 500));
       setSystemChecks(prev => ({ ...prev, browser: 'passed' }));
-      
+
       await new Promise(r => setTimeout(r, 700));
       setSystemChecks(prev => ({ ...prev, camera: 'passed' }));
-      
+
       await new Promise(r => setTimeout(r, 600));
       setSystemChecks(prev => ({ ...prev, microphone: 'passed' }));
-      
+
       await new Promise(r => setTimeout(r, 800));
       setSystemChecks(prev => ({ ...prev, connection: 'passed' }));
     };
@@ -58,14 +60,43 @@ export default function Lobby() {
     runChecks();
   }, [isAuthenticated, navigate]);
 
+  // Fetch interview from API if not in local store
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+
+    // Check if interview exists in local store
+    const localInterview = getInterviewById(id);
+    if (localInterview) {
+      setInterview(localInterview);
+      return;
+    }
+
+    // If not in store and not already loading, fetch from API
+    if (!isLoadingInterview) {
+      setIsLoadingInterview(true);
+      fetchInterview(id).then((fetchedInterview) => {
+        setIsLoadingInterview(false);
+        if (!fetchedInterview) {
+          // Interview doesn't exist, redirect to dashboard
+          toast.error('Interview not found');
+          navigate('/dashboard');
+        } else {
+          setInterview(fetchedInterview);
+        }
+      });
+    }
+  }, [isAuthenticated, id, navigate, fetchInterview, getInterviewById, isLoadingInterview]);
+
+  // Keep interview in sync with local store updates
   useEffect(() => {
     if (id) {
       const checkInterview = () => {
         const currentInterview = getInterviewById(id);
-        setInterview(currentInterview);
+        if (currentInterview) {
+          setInterview(currentInterview);
+        }
       };
-      
-      checkInterview();
+
       const interval = setInterval(checkInterview, 2000);
       return () => clearInterval(interval);
     }

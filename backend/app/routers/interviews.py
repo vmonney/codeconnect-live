@@ -153,9 +153,14 @@ async def get_interview(
         )
 
     # Check if user has access
+    # Allow access if:
+    # 1. User is the interviewer
+    # 2. User is the assigned candidate
+    # 3. No candidate assigned yet (interview is open via share link)
     if (
         interview.interviewer_id != current_user.id
         and interview.candidate_id != current_user.id
+        and interview.candidate_id is not None
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -180,11 +185,21 @@ async def update_interview(
             status_code=status.HTTP_404_NOT_FOUND, detail="Interview not found"
         )
 
-    # Check permissions (only interviewer can update)
-    if interview.interviewer_id != current_user.id:
+    # Check permissions
+    # Allow interviewer to update everything
+    # Allow candidate to update only their own candidate info (candidate_id, candidate_name)
+    is_interviewer = interview.interviewer_id == current_user.id
+    is_candidate = current_user.role.value == "candidate"
+
+    update_data = data.dict(exclude_unset=True)
+    updating_only_candidate_info = all(
+        key in ["candidate_id", "candidate_name"] for key in update_data.keys()
+    )
+
+    if not is_interviewer and not (is_candidate and updating_only_candidate_info):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the interviewer can update this interview",
+            detail="Insufficient permissions to update this interview",
         )
 
     # Update fields
@@ -237,9 +252,14 @@ async def get_chat_messages(
     if not interview:
         raise HTTPException(status_code=404, detail="Interview not found")
 
+    # Allow access if:
+    # 1. User is the interviewer
+    # 2. User is the assigned candidate
+    # 3. No candidate assigned yet (interview is open via share link)
     if (
         interview.interviewer_id != current_user.id
         and interview.candidate_id != current_user.id
+        and interview.candidate_id is not None
     ):
         raise HTTPException(status_code=403, detail="Access denied")
 
